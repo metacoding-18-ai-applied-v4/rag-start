@@ -1,0 +1,69 @@
+"""ex06 — 통합 에이전트 모듈."""
+
+from src.llm_factory import build_llm
+from src.agent_helpers import (
+    parse_agent_result,
+    serialize_steps,
+    clean_think_tags,
+    fallback_response,
+)
+from src.mcp_tools import ALL_TOOLS
+from src.router import QueryRouter
+
+
+# ---------------------------------------------------------------------------
+# 시스템 프롬프트
+# ---------------------------------------------------------------------------
+
+SYSTEM_PROMPT = """당신은 사내 HR 및 업무 질문에 답변하는 AI 어시스턴트입니다.
+
+사용 가능한 도구:
+- leave_balance: 직원 연차 잔여 조회 (emp_no 또는 이름으로 검색)
+- sales_sum: 매출 합계 조회 (부서, 기간 필터 가능)
+- list_employees: 직원 목록 조회 (부서 필터 가능)
+- search_documents: 사내 문서 검색 (절차, 정책, 안내 등)
+
+규칙:
+1. 정형 데이터(숫자/통계/목록)는 DB 조회 도구를 사용하세요.
+2. 비정형 질문(절차/정책/설명)은 search_documents를 사용하세요.
+3. 복합 질문은 두 종류의 도구를 모두 사용하세요.
+4. 답변은 반드시 한국어로 작성하세요.
+5. 도구 실행 결과의 핵심 정보만 추출하여 자연스러운 문장으로 답변하세요. 원본 JSON이나 딕셔너리를 절대 그대로 출력하지 마세요."""
+
+
+# ---------------------------------------------------------------------------
+# 통합 에이전트 클래스
+# ---------------------------------------------------------------------------
+
+class IntegratedAgent:
+    """정형 + 비정형 통합 ReAct 에이전트."""
+
+    def __init__(self, llm=None):
+        """에이전트를 초기화한다."""
+        self._llm = llm or build_llm()
+        self._router = QueryRouter(llm=self._llm)
+        self._agent_executor = self._build_agent_executor()
+
+    def _build_agent_executor(self):
+        """LangChain AgentExecutor를 생성한다."""
+        try:
+            from langchain.agents import AgentExecutor, create_tool_calling_agent
+            from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+
+            # TODO: 프롬프트 구성 (system + history + input + scratchpad)
+            # TODO: Tool Calling Agent 생성
+            # TODO: AgentExecutor 래핑 (중간 단계 반환 활성화)
+            pass
+        except Exception as e:
+            print(f"[경고] AgentExecutor 초기화 실패: {e}. 폴백 모드로 동작합니다.")
+            return None
+
+    def run(self, query):
+        """질문을 처리하고 통합 응답을 반환한다."""
+        # TODO: 질문 유형을 분류한다 (router.classify_query)
+        # TODO: agent_executor가 없으면 폴백 응답을 반환한다
+        # TODO: agent_executor.invoke()로 에이전트를 실행한다
+        # TODO: 응답에서 <think> 태그를 제거한다
+        # TODO: 중간 단계에서 정형/비정형 데이터를 추출한다
+        # TODO: answer, query_type, structured_data, unstructured_data, steps를 딕셔너리로 반환한다
+        pass
