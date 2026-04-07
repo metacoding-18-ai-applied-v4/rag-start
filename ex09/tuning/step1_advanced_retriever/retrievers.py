@@ -1,38 +1,25 @@
-"""step1 Retriever 구현 -- ParentDoc / SelfQuery / ContextualCompression."""
+"""step1 Retriever 구현 -- ParentDoc / SelfQuery / ContextualCompression.
+
+학습 목표:
+  - ParentDocumentRetriever: 자식 청크로 검색 -> 부모 문서 반환
+  - SelfQueryRetriever: 쿼리에서 메타데이터 필터 추출 -> 필터링 검색
+  - ContextualCompressionRetriever: 검색 후 관련 문장만 압축 반환
+"""
 
 from __future__ import annotations
 
-import math
 from typing import Any
 
-
-# ---------------------------------------------------------------------------
-# 헬퍼
-# ---------------------------------------------------------------------------
-
-def _cosine_similarity(a: list[float], b: list[float]) -> float:
-    """두 벡터의 코사인 유사도를 계산합니다."""
-    dot = sum(x * y for x, y in zip(a, b))
-    norm_a = math.sqrt(sum(x * x for x in a))
-    norm_b = math.sqrt(sum(x * x for x in b))
-    if norm_a == 0 or norm_b == 0:
-        return 0.0
-    return dot / (norm_a * norm_b)
-
-
-def _compress(query: str, document: str) -> str:
-    """문서에서 쿼리와 관련된 문장만 추출합니다 (ContextualCompression 핵심)."""
-    query_words = set(query.lower().split())
-    sentences = [s.strip() for s in document.replace("\n", ". ").split(".") if s.strip()]
-
-    relevant: list[str] = []
-    for sentence in sentences:
-        sentence_words = set(sentence.lower().split())
-        overlap = len(query_words & sentence_words)
-        if overlap >= 1 and len(sentence) > 10:
-            relevant.append(sentence)
-
-    return ". ".join(relevant[:3]) if relevant else document[:100]
+from ._retriever_utils import (
+    cosine_similarity,
+    compress,
+    score_documents_by_embedding,
+    score_documents_by_keyword,
+    build_parent_index,
+    embed_child_chunks,
+    extract_topic_filter,
+    apply_metadata_filter,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -48,54 +35,37 @@ class ParentDocumentRetriever:
         child_chunks: list[dict],
         embeddings: Any | None = None,
     ) -> None:
-        self.parent_docs = {doc["id"]: doc for doc in parent_docs}
+        self.parent_docs = build_parent_index(parent_docs)
         self.child_chunks = child_chunks
         self.embeddings = embeddings
         self._child_vectors: list[list[float]] | None = None
 
         if self.embeddings is not None:
-            self._child_vectors = self.embeddings.embed_documents(
-                [c["content"] for c in self.child_chunks]
-            )
+            self._child_vectors = embed_child_chunks(child_chunks, embeddings)
 
     def search(self, query: str, top_k: int = 2) -> list[dict]:
-        """검색을 수행합니다."""
-        scored_chunks: list[tuple[float, dict]] = []
+        """자식 청크에서 유사도가 높은 것을 찾고, 해당 부모 문서를 반환합니다.
 
-        if self.embeddings is not None and self._child_vectors is not None:
-            query_vec = self.embeddings.embed_query(query)
-            for vec, chunk in zip(self._child_vectors, self.child_chunks):
-                score = _cosine_similarity(query_vec, vec)
-                scored_chunks.append((score, chunk))
-        else:
-            # 키워드 폴백
-            query_words = set(query.lower().split())
-            for chunk in self.child_chunks:
-                chunk_words = set(chunk["content"].lower().split())
-                score = len(query_words & chunk_words) / len(query_words) if query_words else 0.0
-                scored_chunks.append((score, chunk))
+        구현 순서:
+          1. 자식 청크들의 점수를 계산합니다.
+             - 임베딩이 있으면: query 임베딩과 self._child_vectors를 cosine_similarity로 비교
+             - 임베딩이 없으면: 키워드 겹침 비율로 점수 계산 (폴백)
+          2. 점수 내림차순 정렬합니다.
+          3. 상위 청크에서 parent_id를 추출하고, 중복 부모를 제거하면서
+             top_k개의 부모 문서 결과를 만듭니다.
 
-        scored_chunks.sort(key=lambda x: x[0], reverse=True)
-
-        seen_parents: set[str] = set()
-        results: list[dict] = []
-
-        for score, chunk in scored_chunks:
-            parent_id = chunk["parent_id"]
-            if parent_id not in seen_parents and len(results) < top_k:
-                seen_parents.add(parent_id)
-                parent_doc = self.parent_docs.get(parent_id)
-                if parent_doc:
-                    results.append({
-                        "parent_title": parent_doc["title"],
-                        "parent_content": parent_doc["content"],
-                        "child_chunk": chunk["content"],
-                        "metadata": parent_doc.get("metadata", {}),
-                        "score": round(score, 4),
-                        "retriever_type": "parent_document",
-                    })
-
-        return results
+        반환 형식 (각 항목):
+            {
+                "parent_title": str,
+                "parent_content": str,
+                "child_chunk": str,      # 매칭된 자식 청크 내용
+                "metadata": dict,
+                "score": float,          # round(score, 4)
+                "retriever_type": "parent_document",
+            }
+        """
+        # TODO: 자식 청크 점수 계산 → 부모 문서 매핑 → 결과 반환
+        pass
 
 
 # ---------------------------------------------------------------------------
@@ -115,62 +85,32 @@ class SelfQueryRetriever:
         self.topic_keywords = topic_keywords or {}
         self.embeddings = embeddings
 
-    def extract_filter(self, query: str) -> dict[str, str]:
-        """쿼리에서 메타데이터 필터를 추출합니다."""
-        filters: dict[str, str] = {}
-        query_lower = query.lower()
-
-        for topic, keywords in self.topic_keywords.items():
-            if any(kw in query_lower for kw in keywords):
-                filters["topic"] = topic
-                break
-
-        return filters
-
     def search(self, query: str, top_k: int = 3) -> list[dict]:
-        """메타데이터 자동 필터링으로 검색합니다."""
-        filters = self.extract_filter(query)
+        """메타데이터 필터를 자동 추출한 뒤 필터링 검색합니다.
 
-        # 필터 적용
-        filtered = self.documents
-        for key, value in filters.items():
-            filtered = [
-                doc for doc in filtered
-                if doc.get("metadata", {}).get(key) == value
-            ]
+        구현 순서:
+          1. extract_topic_filter()로 쿼리에서 필터를 추출합니다.
+          2. apply_metadata_filter()로 문서를 필터링합니다.
+          3. 필터링된 문서들의 점수를 계산합니다.
+             - 임베딩이 있으면: score_documents_by_embedding 사용
+             - 임베딩이 없으면: score_documents_by_keyword 사용
+          4. 점수 내림차순 정렬 후 top_k개 반환합니다.
 
-        # 점수 계산
-        scored: list[tuple[float, dict]] = []
-        if self.embeddings is not None:
-            query_vec = self.embeddings.embed_query(query)
-            doc_vecs = self.embeddings.embed_documents([d["content"] for d in filtered])
-            for vec, doc in zip(doc_vecs, filtered):
-                score = _cosine_similarity(query_vec, vec)
-                scored.append((score, doc))
-        else:
-            query_words = set(query.lower().split())
-            for doc in filtered:
-                content_words = set(doc["content"].lower().split())
-                score = len(query_words & content_words) / len(query_words) if query_words else 0.0
-                scored.append((score, doc))
-
-        scored.sort(key=lambda x: x[0], reverse=True)
-
-        results: list[dict] = []
-        for score, doc in scored[:top_k]:
-            results.append({
-                "content": doc["content"],
-                "score": round(score, 4),
-                "metadata": doc.get("metadata", {}),
-                "applied_filter": filters,
+        반환 형식 (각 항목):
+            {
+                "content": str,
+                "score": float,          # round(score, 4)
+                "metadata": dict,
+                "applied_filter": dict,  # 추출된 필터
                 "retriever_type": "self_query",
-            })
-
-        return results
+            }
+        """
+        # TODO: 필터 추출 → 문서 필터링 → 점수 계산 → 결과 반환
+        pass
 
 
 # ---------------------------------------------------------------------------
-# ContextualCompression (함수형)
+# ContextualCompressionRetriever
 # ---------------------------------------------------------------------------
 
 class ContextualCompressionRetriever:
@@ -185,35 +125,24 @@ class ContextualCompressionRetriever:
         self.embeddings = embeddings
 
     def search(self, query: str, top_k: int = 3) -> list[dict]:
-        """검색 + 압축을 수행합니다."""
-        scored: list[tuple[float, dict]] = []
+        """검색 + 압축을 수행합니다.
 
-        if self.embeddings is not None:
-            query_vec = self.embeddings.embed_query(query)
-            doc_vecs = self.embeddings.embed_documents([d["content"] for d in self.documents])
-            for vec, doc in zip(doc_vecs, self.documents):
-                score = _cosine_similarity(query_vec, vec)
-                scored.append((score, doc))
-        else:
-            query_words = set(query.lower().split())
-            for doc in self.documents:
-                content_words = set(doc["content"].lower().split())
-                score = len(query_words & content_words) / len(query_words) if query_words else 0.0
-                scored.append((score, doc))
+        구현 순서:
+          1. 문서들의 점수를 계산합니다.
+             - 임베딩이 있으면: score_documents_by_embedding 사용
+             - 임베딩이 없으면: score_documents_by_keyword 사용
+          2. 점수 내림차순 정렬 후 상위 top_k개를 선택합니다.
+          3. 각 문서에 compress(query, content)를 적용하여 관련 문장만 추출합니다.
 
-        scored.sort(key=lambda x: x[0], reverse=True)
-
-        results: list[dict] = []
-        for score, doc in scored[:top_k]:
-            original = doc["content"]
-            compressed = _compress(query, original)
-            results.append({
-                "original_content": original,
-                "compressed_content": compressed,
-                "compression_ratio": round(len(compressed) / len(original), 2) if original else 0,
-                "score": round(score, 4),
-                "metadata": doc.get("metadata", {}),
+        반환 형식 (각 항목):
+            {
+                "original_content": str,
+                "compressed_content": str,
+                "compression_ratio": float,  # round(len(compressed) / len(original), 2)
+                "score": float,              # round(score, 4)
+                "metadata": dict,
                 "retriever_type": "contextual_compression",
-            })
-
-        return results
+            }
+        """
+        # TODO: 점수 계산 → 정렬 → 상위 문서 압축 → 결과 반환
+        pass

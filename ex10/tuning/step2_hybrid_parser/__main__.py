@@ -15,18 +15,9 @@ from pathlib import Path
 import fitz  # PyMuPDF
 from rich.console import Console
 
+from ._main_utils import find_pdf
+
 console = Console()
-
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
-DATA_DIR = BASE_DIR / "data"
-
-
-def _find_pdf(pdf_path: str | None) -> Path | None:
-    """테스트용 PDF를 찾는다."""
-    # TODO: pdf_path가 지정되면 해당 경로의 PDF 반환
-    # TODO: 미지정 시 data/docs 폴더에서 첫 번째 PDF 자동 탐색
-    # TODO: PDF가 없으면 안내 메시지 출력 후 None 반환
-    pass
 
 
 def run_step_2_1(pdf_path: Path, threshold: int) -> list[dict]:
@@ -74,9 +65,17 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    # TODO: _find_pdf로 PDF 경로 확인 (없으면 sys.exit(1))
-    # TODO: --step에 따라 run_step_2_1, run_step_2_2 실행
-    pass
+    pdf_path = find_pdf(args.pdf)
+    if not pdf_path:
+        sys.exit(1)
+
+    console.print("[bold]ex10 Step 2: 하이브리드 파싱 전략[/bold]")
+
+    if args.step in ("2-1", "all"):
+        run_step_2_1(pdf_path, args.threshold)
+
+    if args.step in ("2-2", "all"):
+        run_step_2_2(pdf_path)
 
 
 

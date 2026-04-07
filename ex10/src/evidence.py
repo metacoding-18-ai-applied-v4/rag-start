@@ -34,11 +34,25 @@ def list_captured_images() -> list[dict]:
     Returns:
         이미지 정보 리스트. 각 항목에 format, filename, size_kb, web_url 포함.
     """
-    # TODO: CAPTURED_DIR 하위 디렉토리를 순회
-    # TODO: 각 서브디렉토리의 PNG 파일에 대해:
-    #   - format: 서브디렉토리명 (대문자)
-    #   - filename: 파일명
-    #   - size_kb: 파일 크기 (KB)
-    #   - web_url: resolve_image_url 결과
-    # TODO: images 리스트 반환
-    pass
+    images = []
+
+    if not CAPTURED_DIR.exists():
+        return images
+
+    for sub_dir in sorted(CAPTURED_DIR.iterdir()):
+        if not sub_dir.is_dir():
+            continue
+
+        fmt = sub_dir.name.upper()
+
+        for img in sorted(sub_dir.glob("*.png")):
+            size_kb = img.stat().st_size / 1024
+            web_url = resolve_image_url(str(img))
+            images.append({
+                "format": fmt,
+                "filename": img.name,
+                "size_kb": round(size_kb, 1),
+                "web_url": web_url,
+            })
+
+    return images

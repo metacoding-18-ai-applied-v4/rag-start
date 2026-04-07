@@ -15,6 +15,8 @@ from pathlib import Path
 
 from rich.console import Console
 
+from ._main_utils import run_compare, run_step_2_2, run_step_2_3
+
 console = Console()
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -35,47 +37,6 @@ def run_step_2_1(k: int) -> dict | None:
     pass
 
 
-def run_step_2_2(k: int) -> dict | None:
-    """Step 2-2: Hallucination Rate 평가."""
-    from .display import show_summary
-    from .evaluator import run_evaluation
-
-    console.print("[bold]Step 2-2: Hallucination Rate[/bold]")
-
-    # TODO: run_evaluation(k=k) 실행
-    # TODO: hallucination_rate 출력
-    # TODO: 비율에 따라 상태 메시지 출력 (<0.1 녹색, <0.3 노랑, 그 외 빨강)
-    # TODO: result 반환
-    pass
-
-
-def run_step_2_3(k: int) -> dict | None:
-    """Step 2-3: MRR 평가."""
-    from .display import show_summary
-    from .evaluator import run_evaluation
-
-    console.print("[bold]Step 2-3: Mean Reciprocal Rank (MRR)[/bold]")
-
-    # TODO: run_evaluation(k=k) 실행
-    # TODO: MRR 값 출력
-    # TODO: MRR에 따라 상태 메시지 출력 (>0.8 녹색, >0.5 노랑, 그 외 빨강)
-    # TODO: result 반환
-    pass
-
-
-def run_compare() -> None:
-    """K 값별 성능 비교."""
-    from .display import show_comparison
-    from .evaluator import run_evaluation
-
-    console.print("[bold]K 값별 성능 비교[/bold]")
-
-    # TODO: K = [1, 3, 5, 10] 각각에 대해 run_evaluation 실행
-    # TODO: 에러 없는 결과만 수집
-    # TODO: show_comparison으로 비교 테이블 출력
-    pass
-
-
 def main() -> None:
     parser = argparse.ArgumentParser(description="Step 3: RAG 평가 프레임워크")
     parser.add_argument(
@@ -90,13 +51,29 @@ def main() -> None:
 
     console.print("[bold]ex10 Step 3: RAG 평가 프레임워크[/bold]")
 
-    # TODO: --step에 따라 해당 함수 실행
-    #   "2-1" → run_step_2_1
-    #   "2-2" → run_step_2_2
-    #   "2-3" → run_step_2_3
-    #   "compare" → run_compare
-    #   "all" → run_evaluation 후 show_summary + show_category_stats + show_question_details + run_compare
-    pass
+    if args.step == "2-1":
+        run_step_2_1(args.k)
+    elif args.step == "2-2":
+        run_step_2_2(args.k)
+    elif args.step == "2-3":
+        run_step_2_3(args.k)
+    elif args.step == "compare":
+        run_compare()
+    elif args.step == "all":
+        from .display import show_category_stats, show_question_details, show_summary
+        from .evaluator import run_evaluation
+
+        result = run_evaluation(k=args.k)
+        if "error" in result:
+            console.print(f"[red]{result['error']}[/red]")
+            sys.exit(1)
+
+        show_summary(result)
+        show_category_stats(result)
+        show_question_details(result, limit=10)
+
+        console.print()
+        run_compare()
 
 
 

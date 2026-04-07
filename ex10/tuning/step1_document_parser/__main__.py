@@ -15,18 +15,9 @@ from pathlib import Path
 
 from rich.console import Console
 
+from ._main_utils import find_pdf
+
 console = Console()
-
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
-DATA_DIR = BASE_DIR / "data"
-
-
-def _find_pdf(pdf_path: str | None) -> Path | None:
-    """테스트용 PDF를 찾는다."""
-    # TODO: pdf_path가 지정되면 해당 경로의 PDF 반환
-    # TODO: 미지정 시 data/docs 폴더에서 첫 번째 PDF 자동 탐색
-    # TODO: PDF가 없으면 안내 메시지 출력 후 None 반환
-    pass
 
 
 def run_step_1_1(pdf_path: Path) -> dict | None:
@@ -71,11 +62,27 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    # TODO: _find_pdf로 PDF 경로 확인 (없으면 sys.exit(1))
-    # TODO: --timeout을 VISION_TIMEOUT 환경변수로 전달
-    # TODO: --step에 따라 run_step_1_1, run_step_1_2 실행
-    # TODO: step == "all"이면 둘 다 실행 후 show_comparison으로 비교 출력
-    pass
+    pdf_path = find_pdf(args.pdf_path)
+    if not pdf_path:
+        sys.exit(1)
+
+    os.environ["VISION_TIMEOUT"] = str(args.timeout)
+
+    console.print("[bold]ex10 Step 1: 문서 파싱 전략 비교[/bold]")
+
+    ocr_result = None
+    vllm_result = None
+
+    if args.step in ("1-1", "all"):
+        ocr_result = run_step_1_1(pdf_path)
+
+    if args.step in ("1-2", "all"):
+        vllm_result = run_step_1_2(pdf_path)
+
+    if args.step == "all" and ocr_result and vllm_result:
+        from .display import show_comparison
+        console.print()
+        show_comparison(ocr_result, vllm_result, pdf_path.name)
 
 
 
