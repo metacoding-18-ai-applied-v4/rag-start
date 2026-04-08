@@ -57,7 +57,9 @@ def step1_python_parsing(docs_dir: str) -> list[dict]:
         문서 추출 결과 딕셔너리 리스트
     """
     # TODO: extract_all_from_directory()로 문서 추출 → 결과 출력 → 마크다운 저장
-    pass
+    results = extract_all_from_directory(docs_dir)
+    save_results_as_markdown(results)
+    return results
 
 
 def step2_embed_and_store(
@@ -85,7 +87,14 @@ def step2_embed_and_store(
         store_chunks_to_chroma() 반환값 딕셔너리
     """
     # TODO: chunk_all_documents()로 청킹 → store_chunks_to_chroma()로 ChromaDB 저장
-    pass
+    all_chunks = chunk_all_documents(python_results, chunk_size, overlap)
+    store_result = store_chunks_to_chroma(
+        chunks=all_chunks,
+        chroma_dir=chroma_dir,
+        collection_name=collection_name,
+        embedding_model_name=embedding_model_name,
+    )
+    return store_result
 
 
 def main() -> None:
@@ -102,11 +111,23 @@ def main() -> None:
     python_results: list[dict] = []
 
     # TODO: 1 in steps_to_run이면 step1_python_parsing 실행
-    pass
+    
+    if 1 in steps_to_run:
+        python_results = step1_python_parsing(docs_dir=args.docs_dir)
 
     # TODO: 2 in steps_to_run이면 step2_embed_and_store 실행
     #       (Step 1 결과가 없으면 Step 1을 먼저 자동 실행)
-    pass
+    if 2 in steps_to_run:
+        if not python_results:
+            python_results = step1_python_parsing(docs_dir=args.docs_dir)
+        step2_embed_and_store(
+            python_results=python_results,
+            chroma_dir=args.chroma_dir,
+            collection_name=args.collection,
+            embedding_model_name=args.embedding_model,
+            chunk_size=args.chunk_size,
+            overlap=args.overlap,
+        )
 
 
 if __name__ == "__main__":
