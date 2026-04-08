@@ -14,13 +14,13 @@ docs = [
     Document(page_content="[복지규정] 식대 지원: 점심 식사는 무제한 법인카드로 지원하며, 저녁 식사는 오후 9시 이후 야근 시에만 사용이 가능합니다.", metadata={"source": "복지규정"}),
 ]
 
-# 2. VectorDB 생성
 console.print("문서를 학습(임베딩) 중입니다...")
 try:
     # TODO: OllamaEmbeddings(nomic-embed-text)로 임베딩 생성 → Chroma.from_documents로 벡터DB 저장
+    pass
 
-    # 3. 검색기(Retriever) 설정
     # TODO: vectorstore.as_retriever로 검색기 생성 (search_kwargs={"k": 3})
+    pass
 
     # 4. 프롬프트 템플릿
     template = """당신은 회사의 규정에 대해 설명해주는 AI 비서입니다.
@@ -35,15 +35,15 @@ try:
         template=template, input_variables=["context", "question"]
     )
 
-    # 5. RAG 체인 연결
-    # TODO: ChatOllama(deepseek-r1:8b) → RetrievalQA.from_chain_type으로 체인 조립 (retriever, return_source_documents=True, prompt 연결)
+    # TODO: ChatOllama(deepseek-r1:8b) → RetrievalQA.from_chain_type으로 체인 조립
+    pass
 
-    # 6. 질문하기 — 추론이 필요한 복잡한 질문
     question = "입사 6개월차 신입인데 리프레시 데이 2번 썼어. 몇 번 남았는지 규정 기반으로 계산해줘."
     console.print(f"\n질문: {question}")
     console.print("-" * 30)
 
     # TODO: qa_chain.invoke로 질문 실행 → 검색된 문서(근거) 출력 → AI 답변 출력
+    pass
 
 except Exception as e:
     console.print(f"\n에러 발생: {e}")

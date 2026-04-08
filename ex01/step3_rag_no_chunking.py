@@ -21,9 +21,11 @@ docs_bad = [Document(page_content=context_all, metadata={"source": "전체규정
 console.print("문서를 학습(임베딩) 중입니다... (청킹 미적용)")
 try:
     # TODO: OllamaEmbeddings(nomic-embed-text)로 임베딩 생성 → Chroma.from_documents로 벡터DB 저장 (docs_bad 사용)
+    pass
 
     # 3. 검색기 및 프롬프트 설정 (통째로 하나뿐이므로 k=1로 검색해도 전체가 다 나옴)
     # TODO: vectorstore.as_retriever로 검색기 생성 (search_kwargs={"k": 1})
+    pass
 
     template = """당신은 회사의 규정에 대해 설명해주는 AI 비서입니다.
 아래의 참고 정보를 바탕으로 질문에 답하세요. 반드시 한국어로 답변해야 합니다.
@@ -36,12 +38,14 @@ try:
 
     # 4. RAG 체인 실행
     # TODO: ChatOllama(deepseek-r1:8b) → RetrievalQA.from_chain_type으로 체인 조립 (retriever, prompt, return_source_documents=True)
+    pass
 
     question = "신입사원 휴가 규정에 대해 알려줘."
     console.print(f"\n질문: {question}")
     console.print("-" * 30)
 
     # TODO: qa_chain.invoke로 질문 실행 → 답변 출력
+    pass
 
 except Exception as e:
     console.print(f"\n에러 발생: {e}")
