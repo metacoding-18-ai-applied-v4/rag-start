@@ -42,9 +42,15 @@ def run_single_query(
         chroma_dir: ChromaDB 저장 디렉토리 경로
         collection_name: ChromaDB 컬렉션명
         embedding_model_name: 임베딩 모델 HuggingFace ID
-    """
+    """    
     # TODO: search_chroma()로 검색 실행 → 결과를 print_search_result()로 출력
-    pass
+    results = search_chroma(
+    query=query, chroma_dir=chroma_dir,
+    collection_name=collection_name,
+    embedding_model_name=embedding_model_name, top_k=top_k,
+    )   
+    for result in results:
+        print_search_result(result)
 
 
 def run_interactive_mode(
@@ -66,7 +72,11 @@ def run_interactive_mode(
     """
     # TODO: while 루프로 input() 반복 → run_single_query() 호출
     #       'quit'/'exit'/'q' 입력 시 종료
-    pass
+    while True:
+        query = input("검색 쿼리를 입력하십시오: ").strip()
+        if query.lower() in {"quit", "exit", "q"}:
+            break
+        run_single_query(query, top_k, chroma_dir, collection_name, embedding_model_name)
 
 
 def main() -> None:
