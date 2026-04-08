@@ -60,29 +60,29 @@ def store_chunks_to_chroma(
     # TODO: 위 4단계를 순서대로 구현합니다
     model = load_embedding_model(embedding_model_name)
 
-client = chromadb.PersistentClient(
-    path=str(Path(chroma_dir).resolve()),
-    settings=Settings(anonymized_telemetry=False),
-)
-collection = get_or_create_collection(client, collection_name)
-
-ids, documents, embeddings, metadatas = embed_chunks(chunks, model)
-
-for batch_start in range(0, len(ids), BATCH_SIZE):
-    batch_end = batch_start + BATCH_SIZE
-    collection.upsert(
-        ids=ids[batch_start:batch_end],
-        documents=documents[batch_start:batch_end],
-        embeddings=embeddings[batch_start:batch_end],
-        metadatas=metadatas[batch_start:batch_end],
+    client = chromadb.PersistentClient(
+        path=chroma_dir,
+        settings=Settings(anonymized_telemetry=False),
     )
+    collection = get_or_create_collection(client, collection_name)
 
-return {
-    "collection_name": collection_name,
-    "chroma_dir": chroma_dir,
-    "total_chunks": len(chunks),
-    "collection_count": collection.count(),
-}
+    ids, documents, embeddings, metadatas = embed_chunks(chunks, model)
+
+    for batch_start in range(0, len(ids), BATCH_SIZE):
+        batch_end = batch_start + BATCH_SIZE
+        collection.upsert(
+            ids=ids[batch_start:batch_end],
+            documents=documents[batch_start:batch_end],
+            embeddings=embeddings[batch_start:batch_end],
+            metadatas=metadatas[batch_start:batch_end],
+        )
+
+    return {
+        "collection_name": collection_name,
+        "chroma_dir": chroma_dir,
+        "total_chunks": len(chunks),
+        "collection_count": collection.count(),
+    }
 
 
 def search_chroma(
@@ -124,4 +124,30 @@ def search_chroma(
         sys.exit(1)
 
     # TODO: 쿼리 임베딩 → collection.query() → 결과 정리
-    pass
+    model = load_embedding_model(embedding_model_name)
+    query_embedding = model.encode([query], normalize_embeddings=True).tolist()
+
+    client = chromadb.PersistentClient(
+        path=str(Path(chroma_dir).resolve()),
+        settings=Settings(anonymized_telemetry=False),
+    )
+    collection = client.get_collection(name=collection_name)
+
+    results = collection.query(
+        query_embeddings=query_embedding,
+        n_results=top_k,
+        include=["documents", "distances", "metadatas"],
+    )
+
+    search_results = []
+    docs = results.get("documents", [[]])[0]
+    dists = results.get("distances", [[]])[0]
+    metas = results.get("metadatas", [[]])[0]
+
+    for rank, (doc, dist, meta) in enumerate(zip(docs, dists, metas), start=1):
+        search_results.append({
+            "rank": rank, "text": doc,
+            "distance": round(dist, 4), "metadata": meta,
+        })
+
+    return search_results
