@@ -44,14 +44,3 @@ def build_rag_chain():
     """LCEL 파이프 연산자(|)로 RAG 체인과 Retriever를 조립하여 반환한다."""
     # TODO: build_llm()으로 LLM 생성 ~ (chain, retriever) 튜플 반환
     pass
-
-
-# 싱글턴 캐시 (앱 시작 시 1회만 초기화)
-_rag_chain_cache = None
-_retriever_cache = None
-
-
-def get_rag_chain():
-    """RAG 체인과 Retriever 싱글턴 인스턴스를 반환한다."""
-    # TODO: 캐시가 비어 있으면 build_rag_chain()으로 초기화 후 반환
-    pass
