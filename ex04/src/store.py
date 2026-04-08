@@ -35,7 +35,6 @@ def store_chunks_to_chroma(
         {"collection_name", "chroma_dir", "total_chunks", "collection_count"}
     """
     # TODO: 위 4단계를 순서대로 구현합니다
-    # 힌트: embed_chunks()는 (ids, documents, embeddings, metadatas) 튜플 반환
     #       collection.upsert(ids=..., documents=..., embeddings=..., metadatas=...)
     pass
 
@@ -53,6 +52,5 @@ def search_chroma(
         [{"rank", "text", "distance", "metadata"}, ...]
     """
     # TODO: 쿼리 임베딩 → collection.query() → 결과 정리
-    # 힌트: model.encode([query], normalize_embeddings=True)
     #       collection.query(query_embeddings=..., n_results=top_k)
     pass
