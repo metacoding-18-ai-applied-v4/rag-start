@@ -16,6 +16,7 @@ Step 1 (Python 파싱) → Step 2 (청킹 + 임베딩 + ChromaDB 저장) → Ste
 """
 
 import sys
+import time
 from pathlib import Path
 
 # src/ 디렉토리를 파이썬 경로에 추가 (모듈 임포트 지원)
@@ -42,6 +43,12 @@ def step1_python_parsing(docs_dir: str) -> list[dict]:
 
     pypdf, python-docx, openpyxl을 사용하여 docs_dir 내의 모든
     PDF, DOCX, XLSX 파일에서 텍스트를 추출합니다.
+
+    Python 파싱의 한계:
+    - 이미지 기반 PDF: 텍스트를 거의 추출하지 못합니다.
+    - 복잡한 다단 레이아웃: 텍스트 순서가 뒤섞일 수 있습니다.
+    - 표 안의 이미지: 추출 불가합니다.
+    이미지형 PDF의 텍스트 손실 문제는 OCR이나 Vision LLM을 활용하면 개선할 수 있습니다.
 
     Args:
         docs_dir: 문서 파일이 저장된 디렉토리 경로
@@ -92,14 +99,11 @@ def main() -> None:
 
     steps_to_run = sorted(set(args.step))
 
-    # === PROCESS: Step 1 — Python 파싱 ===
     # TODO: 1 in steps_to_run이면 step1_python_parsing 실행
 
-    # === PROCESS: Step 2 — 청킹 + 임베딩 + ChromaDB 저장 ===
     # TODO: 2 in steps_to_run이면 step2_embed_and_store 실행
     #       (Step 1 결과가 없으면 Step 1을 먼저 자동 실행)
 
-    # === OUTPUT: 파이프라인 완료 요약 ===
     # TODO: 총 소요 시간 출력 + 다음 단계(cli_search.py) 안내
 
 
