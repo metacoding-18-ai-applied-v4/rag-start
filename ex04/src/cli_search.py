@@ -23,6 +23,7 @@ from _search_utils import (
     format_distance_as_similarity,
     print_search_result,
     parse_arguments,
+    SEPARATOR,
 )
 from store import search_chroma
 
@@ -85,7 +86,6 @@ def main() -> None:
         print("  python src/main.py")
         sys.exit(1)
 
-    # === PROCESS ===
     if args.query:
         # TODO: 단일 쿼리 모드 — run_single_query() 호출
         pass

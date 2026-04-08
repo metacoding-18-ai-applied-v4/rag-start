@@ -58,7 +58,31 @@ def store_chunks_to_chroma(
     chroma_dir = str(Path(chroma_dir).resolve())
 
     # TODO: 위 4단계를 순서대로 구현합니다
-    pass
+    model = load_embedding_model(embedding_model_name)
+
+client = chromadb.PersistentClient(
+    path=str(Path(chroma_dir).resolve()),
+    settings=Settings(anonymized_telemetry=False),
+)
+collection = get_or_create_collection(client, collection_name)
+
+ids, documents, embeddings, metadatas = embed_chunks(chunks, model)
+
+for batch_start in range(0, len(ids), BATCH_SIZE):
+    batch_end = batch_start + BATCH_SIZE
+    collection.upsert(
+        ids=ids[batch_start:batch_end],
+        documents=documents[batch_start:batch_end],
+        embeddings=embeddings[batch_start:batch_end],
+        metadatas=metadatas[batch_start:batch_end],
+    )
+
+return {
+    "collection_name": collection_name,
+    "chroma_dir": chroma_dir,
+    "total_chunks": len(chunks),
+    "collection_count": collection.count(),
+}
 
 
 def search_chroma(
