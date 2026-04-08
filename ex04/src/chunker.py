@@ -41,15 +41,4 @@ def split_text_into_chunks(
         return []
 
     # TODO: chunk_size 단위로 텍스트를 자르되, overlap만큼 겹치게 합니다
-    chunks = []
-    step = chunk_size - overlap
-    start = 0
-
-    while start < len(text):
-        end = start + chunk_size
-        chunk = text[start:end].strip()
-        if chunk:
-            chunks.append(chunk)
-        start += step
-
-    return chunks
+    pass
