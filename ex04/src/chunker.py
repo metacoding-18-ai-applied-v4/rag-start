@@ -28,18 +28,31 @@ def split_text_into_chunks(
     chunk_size: int = DEFAULT_CHUNK_SIZE,
     overlap: int = DEFAULT_OVERLAP,
 ) -> list[str]:
-    """텍스트를 Fixed-size 방식으로 청크 리스트로 분할합니다.
+    """텍스트 문자열을 Fixed-size 방식으로 청크 리스트로 분할합니다.
 
-    오버랩을 적용하여 청크 경계에서 문맥 손실을 줄입니다.
+    오버랩을 적용하여 청크 경계 부근의 문맥 손실을 줄입니다.
+    빈 텍스트나 공백만 있는 텍스트는 빈 리스트를 반환합니다.
 
     Args:
-        text: 분할할 원본 텍스트
+        text: 분할할 원본 텍스트 문자열
         chunk_size: 각 청크의 최대 문자 수 (기본: 500)
         overlap: 이전 청크와 겹치는 문자 수 (기본: 100)
 
     Returns:
         분할된 텍스트 청크 문자열 리스트
+
+    Raises:
+        ValueError: chunk_size가 overlap보다 작거나 같은 경우
     """
+    if chunk_size <= overlap:
+        raise ValueError(
+            f"chunk_size({chunk_size})는 overlap({overlap})보다 커야 합니다."
+        )
+
+    text = text.strip()
+    if not text:
+        return []
+
     # TODO: chunk_size 단위로 텍스트를 자르되, overlap만큼 겹치게 합니다
     # 힌트: step = chunk_size - overlap, while start < len(text)
     pass
