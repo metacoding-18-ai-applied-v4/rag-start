@@ -42,11 +42,7 @@ def _format_docs(docs):
 
 def build_rag_chain():
     """LCEL 파이프 연산자(|)로 RAG 체인과 Retriever를 조립하여 반환한다."""
-    # TODO: build_llm()으로 LLM 생성
-    # TODO: build_retriever()로 Retriever 생성
-    # TODO: ChatPromptTemplate 구성 (RAG_SYSTEM_PROMPT + RAG_HUMAN_PROMPT)
-    # TODO: LCEL 파이프로 체인 조립
-    # TODO: (chain, retriever) 튜플 반환
+    # TODO: build_llm()으로 LLM 생성 ~ (chain, retriever) 튜플 반환
     pass
 
 
