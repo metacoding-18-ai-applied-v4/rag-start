@@ -128,7 +128,7 @@ def search_chroma(
     query_embedding = model.encode([query], normalize_embeddings=True).tolist()
 
     client = chromadb.PersistentClient(
-        path=str(Path(chroma_dir).resolve()),
+        path=str(chroma_dir_path.resolve()),
         settings=Settings(anonymized_telemetry=False),
     )
     collection = client.get_collection(name=collection_name)

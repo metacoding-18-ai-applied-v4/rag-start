@@ -30,14 +30,13 @@ def format_distance_as_similarity(distance: float) -> float:
     Returns:
         유사도 백분율 (float, 0.0 ~ 100.0)
     """
-    return (1 - distance / 2) * 100
+    return max(0.0, (1.0 - distance / 2.0)) * 100
 
 
 def _similarity_bar(pct: float, width: int = 20) -> str:
     """유사도 백분율을 시각적 프로그레스 바로 변환합니다."""
     filled = int(pct / 100 * width)
-    empty = width - filled
-    return "█" * filled + "░" * empty
+    return "█" * filled + "░" * (width - filled)
 
 
 def _clean_text(text: str, max_len: int = 200) -> str:
@@ -45,14 +44,17 @@ def _clean_text(text: str, max_len: int = 200) -> str:
 
     연속 공백과 불필요한 줄바꿈을 제거하고 최대 길이를 제한합니다.
     """
-    text = re.sub(r"\s+", " ", text).strip()
-    if len(text) > max_len:
-        text = text[:max_len] + "..."
-    return text
+    # 연속 공백 → 단일 공백 (PDF 다단 편집 공백 문제 해결)
+    cleaned = re.sub(r"[ \t]{2,}", " ", text.strip())
+    # 연속 줄바꿈 → 단일 줄바꿈
+    cleaned = re.sub(r"\n{2,}", "\n", cleaned)
+    if len(cleaned) > max_len:
+        cleaned = cleaned[:max_len] + "..."
+    return cleaned
 
 
 def print_search_result(result: dict) -> None:
-    """단일 검색 결과를 터미널에 출력합니다.
+    """단일 검색 결과를 터미널에 이모지와 함께 출력합니다.
 
     Args:
         result: store.search_chroma() 반환 리스트의 개별 원소 딕셔너리
@@ -60,26 +62,44 @@ def print_search_result(result: dict) -> None:
     rank = result["rank"]
     text = result["text"]
     distance = result["distance"]
-    metadata = result["metadata"]
+    meta = result["metadata"]
 
-    similarity = format_distance_as_similarity(distance)
-    bar = _similarity_bar(similarity)
-    clean = _clean_text(text)
+    pct = format_distance_as_similarity(distance)
+    file_name = meta.get("file_name", "알 수 없음")
+    page = meta.get("page", "-")
+    chunk_type = meta.get("chunk_type", "text")
+    image_path = meta.get("image_path", "")
 
-    file_name = metadata.get("file_name", "알 수 없음")
-    page = metadata.get("page", "?")
-    chunk_type = metadata.get("chunk_type", "text")
-    image_path = metadata.get("image_path", "")
+    # 순위별 이모지
+    rank_emoji = {1: "🥇", 2: "🥈", 3: "🥉"}.get(rank, f"#{rank}")
 
-    print(f"\n[{rank}] {file_name} (p.{page})")
-    print(f"    유사도: {similarity:.1f}% {bar}")
-    print(f"    텍스트: {clean}")
+    # 유사도별 이모지
+    if pct >= 80:
+        score_emoji = "🟢"
+    elif pct >= 70:
+        score_emoji = "🟡"
+    else:
+        score_emoji = "🔴"
 
-    if chunk_type == "image_caption" and image_path:
-        if os.path.exists(image_path):
-            print(f"    이미지: {image_path}")
-        else:
-            print(f"    이미지: {image_path} (파일 없음)")
+    # 파일 유형별 이모지
+    type_emoji = "🖼️" if chunk_type == "image_caption" else "📄"
+
+    # 결과 헤더
+    print(f"\n{'─' * 60}")
+    print(f"  {rank_emoji}  {score_emoji} 유사도 {pct:.1f}%  {_similarity_bar(pct)}")
+    print(f"  {type_emoji}  출처: {file_name}  |  페이지: {page}")
+    print(f"{'─' * 60}")
+
+    # 텍스트 근거 (정리된 버전)
+    display_text = _clean_text(text)
+    # 들여쓰기 적용
+    for line in display_text.split("\n"):
+        print(f"  {line}")
+
+    # 이미지 캡처본 경로 표시
+    if image_path:
+        exists = "✅" if Path(image_path).exists() else "⚠️ 파일 없음"
+        print(f"  🖼️  캡처본: {image_path} {exists}")
 
 
 def parse_arguments() -> argparse.Namespace:

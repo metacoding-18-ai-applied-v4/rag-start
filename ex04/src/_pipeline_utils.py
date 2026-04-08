@@ -32,34 +32,27 @@ def save_results_as_markdown(
         results: extractor.extract_all_from_directory() 반환값
         markdown_dir: 마크다운 파일 저장 디렉토리
     """
-    md_path = Path(markdown_dir)
-    md_path.mkdir(parents=True, exist_ok=True)
+    md_dir = Path(markdown_dir)
+    md_dir.mkdir(parents=True, exist_ok=True)
 
     for result in results:
-        file_name = result["file_name"]
-        file_type = result["file_type"]
-        pages = result["pages"]
+        stem = Path(result["file_name"]).stem
+        md_path = md_dir / f"{stem}.md"
 
-        # 전체 텍스트 합산
-        all_text = ""
-        for page_data in pages:
-            text = page_data.get("text", "")
-            if text:
-                all_text += text + "\n\n"
+        lines = [f"# {result['file_name']}\n"]
+        lines.append(f"- 파일 형식: {result['file_type']}")
+        lines.append(f"- 추출 글자 수: {len(result['full_text'])}자\n")
+        lines.append("---\n")
 
-        total_chars = len(all_text.strip())
-        stem = Path(file_name).stem
-        md_file = md_path / f"{stem}.md"
+        for page in result["pages"]:
+            text = page.get("text", "")
+            if not text:
+                continue
+            lines.append(text)
+            lines.append("")
 
-        content = f"# {file_name}\n\n"
-        content += f"- **형식**: {file_type}\n"
-        content += f"- **글자 수**: {total_chars:,}자\n"
-        content += f"- **페이지 수**: {len(pages)}페이지\n\n"
-        content += "---\n\n"
-        content += all_text.strip() + "\n"
-
-        md_file.write_text(content, encoding="utf-8")
-        print(f"    저장: {md_file}")
+        md_path.write_text("\n".join(lines), encoding="utf-8")
+        print(f"    💾 {result['file_name']} → {md_path.name}")
 
 
 def parse_arguments() -> argparse.Namespace:

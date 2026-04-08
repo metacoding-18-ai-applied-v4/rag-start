@@ -53,4 +53,3 @@ def split_text_into_chunks(
         start += step
 
     return chunks
-

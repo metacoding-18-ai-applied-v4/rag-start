@@ -60,10 +60,12 @@ def get_or_create_collection(
     Returns:
         ChromaDB Collection 인스턴스
     """
+    # === PROCESS ===
     collection = client.get_or_create_collection(
         name=collection_name,
         metadata={"hnsw:space": "cosine"},  # cosine 유사도 사용
     )
+    # === OUTPUT ===
     return collection
 
 
@@ -92,6 +94,7 @@ def embed_chunks(
     if not chunks:
         raise ValueError("임베딩할 청크가 없습니다. 문서 파싱이 정상적으로 완료되었는지 확인하십시오.")
 
+    # === PROCESS ===
     ids = [c["id"] for c in chunks]
     documents = [c["text"] for c in chunks]
 
@@ -117,4 +120,5 @@ def embed_chunks(
         )
         all_embeddings.extend(batch_embeddings.tolist())
 
+    # === OUTPUT ===
     return ids, documents, all_embeddings, metadatas

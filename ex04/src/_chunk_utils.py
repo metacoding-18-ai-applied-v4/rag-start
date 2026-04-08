@@ -47,6 +47,7 @@ def build_text_chunk(
     """
     chunk_id = f"{doc_id}_text_p{page:03d}_c{chunk_index:04d}"
 
+    # === OUTPUT ===
     return {
         "id": chunk_id,
         "text": chunk_text,

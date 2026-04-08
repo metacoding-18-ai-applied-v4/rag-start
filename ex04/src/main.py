@@ -111,12 +111,10 @@ def main() -> None:
     python_results: list[dict] = []
 
     # TODO: 1 in steps_to_run이면 step1_python_parsing 실행
-    
     if 1 in steps_to_run:
         python_results = step1_python_parsing(docs_dir=args.docs_dir)
 
     # TODO: 2 in steps_to_run이면 step2_embed_and_store 실행
-    #       (Step 1 결과가 없으면 Step 1을 먼저 자동 실행)
     if 2 in steps_to_run:
         if not python_results:
             python_results = step1_python_parsing(docs_dir=args.docs_dir)
