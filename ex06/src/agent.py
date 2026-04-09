@@ -50,7 +50,7 @@ class IntegratedAgent:
             from langchain.agents import AgentExecutor, create_tool_calling_agent
             from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
-            # TODO: __init__ — 프롬프트 + Agent + Executor 조립
+            # TODO: _build_agent_executor — 프롬프트 + Agent + Executor 조립
             pass
         except Exception as e:
             print(f"[경고] AgentExecutor 초기화 실패: {e}. 폴백 모드로 동작합니다.")
