@@ -50,9 +50,7 @@ class IntegratedAgent:
             from langchain.agents import AgentExecutor, create_tool_calling_agent
             from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
-            # TODO: 프롬프트 구성 (system + history + input + scratchpad)
-            # TODO: Tool Calling Agent 생성
-            # TODO: AgentExecutor 래핑 (중간 단계 반환 활성화)
+            # TODO: __init__ — 프롬프트 + Agent + Executor 조립
             pass
         except Exception as e:
             print(f"[경고] AgentExecutor 초기화 실패: {e}. 폴백 모드로 동작합니다.")
@@ -60,10 +58,5 @@ class IntegratedAgent:
 
     def run(self, query):
         """질문을 처리하고 통합 응답을 반환한다."""
-        # TODO: 질문 유형을 분류한다 (router.classify_query)
-        # TODO: agent_executor가 없으면 폴백 응답을 반환한다
-        # TODO: agent_executor.invoke()로 에이전트를 실행한다
-        # TODO: 응답에서 <think> 태그를 제거한다
-        # TODO: 중간 단계에서 정형/비정형 데이터를 추출한다
-        # TODO: answer, query_type, structured_data, unstructured_data, steps를 딕셔너리로 반환한다
+        # TODO: run — 질문 분류 → 에이전트 실행 → 응답 정리
         pass

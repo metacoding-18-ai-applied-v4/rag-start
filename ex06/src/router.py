@@ -56,10 +56,7 @@ class QueryRouter:
 
     def classify_query(self, query):
         """질문을 분석하여 처리 경로를 반환한다."""
-        # TODO: Step 1 — 규칙 기반 키워드 매칭을 시도한다
-        # TODO: Step 2 — DB 스키마 컬럼명 매칭을 시도한다
-        # TODO: Step 3 — LLM 판단 (폴백)을 시도한다
-        # TODO: 기본값 — 모든 단계에서 결정되지 않으면 "unstructured"를 반환한다
+        # TODO: classify_query — 3단계로 질문 분류 (키워드 → 스키마 → LLM)
         pass
 
     # ------------------------------------------------------------------
@@ -68,21 +65,15 @@ class QueryRouter:
 
     def _step1_rule_based(self, query):
         """규칙 기반 키워드 매칭으로 경로를 결정한다."""
-        # TODO: STRUCTURED_KEYWORDS와 UNSTRUCTURED_KEYWORDS 각각의 히트 수를 센다
-        # TODO: 양쪽 모두 히트 시 — 한 쪽이 2배 이상 우세하면 그 쪽, 아니면 "hybrid"
-        # TODO: 한 쪽만 히트 시 — 해당 경로 반환
-        # TODO: 히트 없으면 None 반환
+        # TODO: _step1_rule_based — 키워드 매칭으로 경로 결정
         pass
 
     def _step2_schema_based(self, query):
         """DB 스키마 컬럼명 매칭으로 경로를 결정한다."""
-        # TODO: SCHEMA_TERMS 딕셔너리를 순회하며 query에 포함된 컬럼명을 찾는다
-        # TODO: 매칭되면 해당 경로 반환, 없으면 None 반환
+        # TODO: _step2_schema_based — DB 컬럼명 매칭으로 경로 결정
         pass
 
     def _step3_llm_based(self, query):
         """LLM에게 질문 분류를 위임한다."""
-        # TODO: 프롬프트를 구성하여 LLM에게 structured/unstructured/hybrid 중 하나를 JSON으로 반환하도록 요청한다
-        # TODO: 응답에서 <think> 태그를 제거하고 JSON을 파싱한다
-        # TODO: 유효한 route 값이면 반환, 실패 시 None 반환
+        # TODO: _step3_llm_based — LLM에게 질문 분류 위임
         pass
